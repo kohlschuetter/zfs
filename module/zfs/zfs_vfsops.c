@@ -904,6 +904,9 @@ zfs_sb_free(zfs_sb_t *zsb)
 	rw_destroy(&zsb->z_fuid_lock);
 	for (i = 0; i != ZFS_OBJ_MTX_SZ; i++)
 		mutex_destroy(&zsb->z_hold_mtx[i]);
+	if(zsb->z_osname != NULL) {
+	    kmem_free(zsb->z_osname, MAXNAMELEN);
+	}
 	kmem_free(zsb, sizeof (zfs_sb_t));
 }
 

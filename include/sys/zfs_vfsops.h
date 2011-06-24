@@ -85,6 +85,7 @@ typedef struct zfs_sb {
 	sa_attr_type_t	*z_attr_table;	/* SA attr mapping->id */
 #define	ZFS_OBJ_MTX_SZ	64
 	kmutex_t	z_hold_mtx[ZFS_OBJ_MTX_SZ];	/* znode hold locks */
+	char		*z_osname;	/* z_os name (or NULL if not cached) */
 } zfs_sb_t;
 
 #define	ZFS_SUPER_MAGIC	0x2fc12fc1

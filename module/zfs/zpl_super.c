@@ -157,6 +157,45 @@ zpl_show_options(struct seq_file *seq, struct vfsmount *vfsp)
 }
 
 static int
+zpl_freeze_fs(struct super_block *sb)
+{
+	int error;
+	zfs_sb_t *zsb = sb->s_fs_info;
+
+	if(zsb->z_osname == NULL) {
+	    zsb->z_osname = kmem_zalloc(MAXNAMELEN, KM_SLEEP);
+	    dmu_objset_name(zsb->z_os, zsb->z_osname);
+	    if(zsb->z_osname[0] == '\0') {
+		    printk(KERN_INFO "ZFS: zpl_freeze_fs: could not determine osname\n");
+		    return -EINVAL;
+	    }
+	}
+
+	error = -zfs_suspend_fs(zsb);
+
+	ASSERT3S(error, <=, 0);
+	return (error);
+}
+
+static int
+zpl_unfreeze_fs(struct super_block *sb)
+{
+	int error;
+	zfs_sb_t *zsb = sb->s_fs_info;
+
+	if(zsb->z_osname == NULL || zsb->z_osname[0] == '\0') {
+	    printk(KERN_INFO
+		"ZFS: zpl_unfreeze_fs: could not determine osname\n");
+	    return -EINVAL;
+	}
+
+	error = -zfs_resume_fs(zsb, zsb->z_osname);
+
+	ASSERT3S(error, <=, 0);
+	return (error);
+}
+
+static int
 zpl_fill_super(struct super_block *sb, void *data, int silent)
 {
 	int error;
@@ -208,6 +247,8 @@ const struct super_operations zpl_super_operations = {
 	.remount_fs	= zpl_remount_fs,
 	.show_options	= zpl_show_options,
 	.show_stats	= NULL,
+	.freeze_fs	= zpl_freeze_fs,
+	.unfreeze_fs	= zpl_unfreeze_fs,
 };
 
 struct file_system_type zpl_fs_type = {
